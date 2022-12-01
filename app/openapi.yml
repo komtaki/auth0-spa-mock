@@ -1,0 +1,275 @@
+openapi: 3.0.0
+
+info:
+  version: 1.0.0
+  title: Auth0 Mock API
+servers:
+  - url: "http://localhost:1080"
+    description: Development server
+
+paths:
+  /.well-known/jwks.json:
+    get:
+      operationId: getJWTS
+      responses:
+        "200":
+          description: response_modeがweb_messageの時の成功レスポンス
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JWTKeysResponse"
+
+  /authorize:
+    get:
+      operationId: authorize
+      description: 認証する
+      parameters:
+        - in: query
+          name: code_challenge
+          required: true
+          schema:
+            type: string
+          example: CwjHMY8t1d9qjefv9TzXATUFDMIAb-lLAhvwYj--TdU
+        - in: query
+          name: code_challenge_method
+          required: true
+          schema:
+            type: string
+          example: S256
+        - in: query
+          name: state
+          required: true
+          schema:
+            type: string
+          example: RUFmLjg2ZEY5UjN4b292WFEtaTBGT2ZzVkkyZHZURTR5WGpzSDg2dlF+Rg==
+        - in: query
+          name: nonce
+          required: true
+          schema:
+            type: string
+          example: UHJ+WkExUEZTV19+UUlzd1Euck1OWDA0Vy5aOF9rV3lraC5DdHdTQ3U3Zw==
+        - in: query
+          name: client_id
+          required: true
+          schema:
+            type: string
+          example: xxxxxx
+        - in: query
+          name: scope
+          required: true
+          schema:
+            type: string
+          example: openid profile email
+        - in: query
+          name: response_type
+          required: true
+          schema:
+            type: string
+            enum: [code, web_message]
+          example: code
+        - in: query
+          name: response_mode
+          required: true
+          schema:
+            type: string
+            enum: [query, web_message]
+          example: query web_message
+        - in: query
+          name: audience
+          schema:
+            type: string
+          example: http://localhost:18080
+        - in: query
+          name: prompt
+          schema:
+            type: string
+          example: none
+        - in: query
+          name: redirect_uri
+          schema:
+            type: string
+            format: uri
+          example: http://localhost:13000/auth/callback
+        - in: query
+          name: auth0Client
+          schema:
+            type: string
+          example: eyJuYW1lIjoiYXV0aDAtcmVhY3QiLCJ2ZXJzaW9uIjoiMS4xMi4wIn0
+      responses:
+        "200":
+          description: response_modeがweb_messageの時の成功レスポンス
+        "302":
+          description: response_modeがqueryの時の成功レスポンス
+        "400":
+          description: 400系エラーのレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: 500エラーのレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /oauth/token:
+    post:
+      operationId: createOAuthToken
+      description: 認証トークンを取得する
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizationTokenRequest"
+      responses:
+        "200":
+          description: 成功時のレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationTokenResponse"
+        "400":
+          description: 400エラーのレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: 500エラーのレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    ErrorDetail:
+      type: object
+      required:
+        - type
+      properties:
+        path:
+          type: string
+          example: "/query/nonce"
+          readOnly: true
+        message:
+          type: string
+          example: must have required property 'state'
+          readOnly: true
+        errorCode:
+          type: string
+          example: required.openapi.validation
+          readOnly: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - errors
+      properties:
+        message:
+          type: string
+          example: request/query must have required property 'code_challenge'
+          readOnly: true
+        errors:
+          $ref: "#/components/schemas/ErrorDetail"
+
+    JWTKey:
+      type: object
+      required:
+        - alg
+        - kty
+        - use
+        - n
+        - e
+        - kid
+        - x5t
+        - x5c
+      properties:
+        alg:
+          type: string
+          example: alg
+        kty:
+          type: string
+          example: RSA
+        use:
+          type: string
+          example: sig
+        n:
+          type: string
+          example: vMPd9fkWPVbz
+        kid:
+          type: string
+          example: xxxxx
+        e:
+          type: string
+          example: AQAB
+        x5t:
+          type: string
+          example: zUa292sHPitvf_-aDe6ZD2VLv4Q
+        x5c:
+          type: array
+          items:
+            type: string
+
+    JWTKeysResponse:
+      type: object
+      required:
+        - keys
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: "#/components/schemas/JWTKey"
+
+    AuthorizationTokenRequest:
+      type: object
+      required:
+        - client_id
+        - code
+        - code_verifier
+        - grant_type
+        - redirect_uri
+      properties:
+        client_id:
+          type: string
+          example: t2kyEk5fbZSUuxmp9jPLo6lt7h6wDdcA
+        code:
+          type: string
+          example: ZtVJQyXf9eOOQJi5h_xpY6CSgEcr092_3TTWT28zsy42z
+        code_verifier:
+          type: string
+          example: CdxOhln28pU53~FZHF99y8SVlN~ge666j0P~TqD9FSG"
+        grant_type:
+          type: string
+          example: authorization_code
+        redirect_uri:
+          type: string
+          format: uri
+          example: http://localhost:13000/auth/callback/
+
+    AuthorizationTokenResponse:
+      type: object
+      required:
+        - access_token
+        - expires_in
+        - id_token
+        - scope
+        - token_type
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Inh4eHh4In0.eyJodHRwOi8vbG9jYWxob3N0OjEwODAvZW1haWwiOiJiZW5nbzRAZXhhbXBsZS5jb20iLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjEwODAvIiwic3ViIjoiYXV0aDB8NjM0Njc3YTA1YjA0Mjk4MDFlZTA1YmU1IiwiYXVkIjpbImh0dHA6Ly9sb2NhbGhvc3Q6MTgwODAiLCJ4eHgiXSwiaWF0IjoxNjY5ODcyNTUxLCJleHAiOjE2Njk5NTg5NTEsImF6cCI6Inh4eHgiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwicGVybWlzc2lvbnMiOltdfQ.uIVsA3RVPEAvICih8rZBlGLtIgQDj_FW2o5M1YSB4yryd_Bjd7gnTB7EcR45dh7FcBlTXI48CznZ6WmMA5TMaALR7Ptp604q-sPgepEodcLPvl_jgAnq0vMb0ITLlcfA0tisknjoQ0OT32cSy8rnbc5YTU7lX9hv84nRd5zWBLKUZS_oqlMMXXXPsHSoDsi0uzL7WON2NKFd2HkxxqfTbJmXLULhOfaKSBl3Tlwrf2QhFm3ymQzmtkNQh6Zqw5Vbn5OIq-ZMCipQ_ccIYTFjQrGdYmy-P92a3opN4O8RX5is8CCB9rP5pqNZCoo2dZ58OgtB-8yIlhP-JFglzaiL-g"
+        expires_in:
+          type: integer
+          example: 86400
+        id_token:
+          type: string
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Inh4eHh4In0.eyJuaWNrbmFtZSI6IiIsIm5hbWUiOiJiZW5nbzRAZXhhbXBsZS5jb20iLCJwaWN0dXJlIjoiIiwidXBkYXRlZF9hdCI6IjIwMjItMTEtMTBUMDg6MzQ6NTQuMzY4WiIsImVtYWlsIjoiYmVuZ280QGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6MTA4MC8iLCJzdWIiOiJhdXRoMHw2MzQ2NzdhMDViMDQyOTgwMWVlMDViZTUiLCJhdWQiOiJ4eHh4IiwiaWF0IjoxNjY5ODcyNTUxLCJleHAiOjE2Njk5NTg5NTEsInNpZCI6ImtNQXNhb1B0bG5zZXZuVFNmRDg3R1Q1eDNCLXd4SWJsIiwibm9uY2UiOiJlRGczVlRWVWFHbHhZVVp5T0hCbGJETnFRa0ZtVTB4d1RIVlBja0Y0UlM1cVJHZG9SWEk1V2s1TVJ3PT0ifQ.MH9lQgAukP8-zy85RxsRqgI5zM399_eDE2vqFMnmNXq0t5Kfi0kRp0OF8q_j8R3b_ONQZIRZeW9atCHOupJtWKhVYyMY5ZM2REH5t1xBq4oDuuE4mNhTL5eQ08zU8kwRkduNVMTXfmy2aNfVKRx52tbuw3nZWrM7rf9c1v4HtJj37AGe-Xp_c7ksqkdfZ7AxKwqWU5QV0M-cm5e3ufv5NpzCkSFdYly4aW9bKQy3RmW2aHPAbmmWoavFIweYeOnasSHKH4V0ghelwI9WUr7FANW_W-QRUTRWG8hwY3menYoz1gISYlIaZcw1TzMfGMw3yWF6JfdOFE_BkDdGb21yyQ"
+        scope:
+          type: string
+          example: "openid profile email"
+        token_type:
+          type: string
+          example: "Bearer"
